@@ -1,0 +1,29 @@
+html {
+  [data-rune] * {
+    box-sizing: content-box;
+  }
+
+  #body {
+    padding: 40px 80px;
+    font-size: 18px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+  }
+
+  .TodoItemView {
+    display: flex;
+    align-items: center;
+  }
+
+  .TodoPage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .SegmentItemView.selected {
+    border: solid 2px blue;
+  }
+}
