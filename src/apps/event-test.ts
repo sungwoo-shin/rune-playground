@@ -4,7 +4,6 @@ class TestButtonClickEvent extends CustomEventWithoutDetail {}
 
 class TestButtonView extends View {
   @on("click")
-  // @ts-expect-error
   private handleClick(event: MouseEvent) {
     this.dispatchEvent(TestButtonClickEvent, {
       bubbles: true,
@@ -52,59 +51,75 @@ class EventTestView extends View {
   //   this.delegate(
   //     "test:button:click:event",
   //     ".test-button-wrapper",
-  //     (event) => {
+  //     (event, target) => {
   //       console.log("event: ", event);
+  //       console.log("target: ", target);
   //     }
   //   );
   // }
 
   // // delegate (2) -> No overload matches this call.
   // protected onMount() {
-  //   this.delegate("test:button:click:event", TestButtonView, (event) => {
-  //     console.log("event: ", event);
-  //   });
+  //   this.delegate(
+  //     "test:button:click:event",
+  //     TestButtonView,
+  //     (event, target) => {
+  //       console.log("event: ", event);
+  //       console.log("target: ", target);
+  //     }
+  //   );
   // }
 
   // // delegate (3) -> No overload matches this call.
   // protected onMount() {
-  //   this.delegate(TestButtonClickEvent, ".test-button-wrapper", (event) => {
-  //     console.log("event: ", event);
-  //   });
+  //   this.delegate(
+  //     TestButtonClickEvent,
+  //     ".test-button-wrapper",
+  //     (event, target) => {
+  //       console.log("event: ", event);
+  //       console.log("target: ", target);
+  //     }
+  //   );
   // }
 
-  // // delegate (4) -> No overload matches this call.
+  // // delegate (4) -> OK
   // protected onMount() {
-  //   this.delegate(TestButtonClickEvent, TestButtonView, (event) => {
+  //   this.delegate(TestButtonClickEvent, TestButtonView, (event, target) => {
   //     console.log("event: ", event);
+  //     console.log("target: ", target);
   //   });
   // }
 
   // // delegate (5) -> Unable to resolve signature of method decorator when called as an expression.
   // @on("test:button:click:event", ".test-button-wrapper")
   // // @ts-expect-error
-  // private handleClick(event: TestButtonClickEvent) {
+  // private handleClick(event: TestButtonClickEvent, target: TestButtonView) {
   //   console.log("event: ", event);
+  //   console.log("target: ", target);
   // }
 
   // // delegate (6) -> Unable to resolve signature of method decorator when called as an expression.
   // @on("test:button:click:event", TestButtonView)
   // // @ts-expect-error
-  // private handleClick(event: TestButtonClickEvent) {
+  // private handleClick(event: TestButtonClickEvent, target: TestButtonView) {
   //   console.log("event: ", event);
+  //   console.log("target: ", target);
   // }
 
   // // delegate (7) -> OK
   // @on(TestButtonClickEvent, ".test-button-wrapper")
   // // @ts-expect-error
-  // private handleClick(event: TestButtonClickEvent) {
+  // private handleClick(event: TestButtonClickEvent, target: TestButtonView) {
   //   console.log("event: ", event);
+  //   console.log("target: ", target);
   // }
 
   // delegate (8) -> Not Working
   @on(TestButtonClickEvent, TestButtonView)
   // @ts-expect-error
-  private handleClick(event: TestButtonClickEvent) {
+  private handleClick(event: TestButtonClickEvent, target: TestButtonView) {
     console.log("event: ", event);
+    console.log("target: ", target);
   }
 
   protected template() {
