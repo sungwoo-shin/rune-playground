@@ -101,7 +101,7 @@ class ChatEditorView extends View<ChatEditorViewProps> {
 
   protected template() {
     return html`<form>
-      <textarea required minlength="5"></textarea>
+      <textarea required minlength="2"></textarea>
 
       <button type="submit">제출</button>
     </form>`;
@@ -215,13 +215,22 @@ class ChattingPage extends View<ChattingPageViewProps> {
     };
     this.data.chats.push(newChat);
     this.chatListView.append({ chat: newChat, me: this.data.me });
+    this.chatListView.itemViews.at(-1)!.element().scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }
 
   private handleChatEditSubmit(event: ChatEditSubmitEvent) {
     const { editedChatId, editedChatText } = event.detail;
-    this.chatListView.itemViews
-      .find((itemView) => itemView.data.chat.id === editedChatId)
-      ?.setText(editedChatText);
+    const editedItemView = this.chatListView.itemViews.find(
+      (itemView) => itemView.data.chat.id === editedChatId
+    );
+    editedItemView?.setText(editedChatText);
+    editedItemView?.element().scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   }
 
   protected onMount() {
