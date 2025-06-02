@@ -14,6 +14,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@fxts/core": "^1.11.0",
     "rune-ts": "^0.9.3"
   }
 }

@@ -1,5 +1,7 @@
 import { $, CustomEventWithDetail, html, ListView, View } from "rune-ts";
 import "./my-chatting.scss";
+import { delay } from "@fxts/core";
+import { mockChats } from "./mockChats";
 
 class ChatRemoveButtonClickEvent extends CustomEventWithDetail<string> {}
 
@@ -100,9 +102,20 @@ class ChatListView extends ListView<ChatItemView> {
   override append(_: never): never {
     throw new Error("Use appendChat method instead of append.");
   }
-
   appendChat(chat: TChat) {
     return super.append({ chat, me: this.me });
+  }
+
+  override appendAll(_: never): never {
+    throw new Error("Use appendChat method instead of appendAll.");
+  }
+  appendAllChats(chats: TChat[]) {
+    return super.appendAll(
+      chats.map((chat) => ({
+        chat,
+        me: this.me,
+      }))
+    );
   }
 }
 
@@ -183,6 +196,21 @@ class ChatEditorView extends View<ChatEditorViewProps> {
   }
 }
 
+const CHAT_COUNT_PER_PAGE = 5;
+
+const getChats = (() => {
+  let page = 0;
+
+  return async () => {
+    await delay(3000);
+    const start = page * CHAT_COUNT_PER_PAGE;
+    const end = start + CHAT_COUNT_PER_PAGE;
+    const result = mockChats.slice(start, end);
+    page += 1;
+    return result;
+  };
+})();
+
 const generateRandomId = () => Math.random().toString(36).substring(2, 15);
 
 type TUser = {
@@ -197,9 +225,15 @@ class ChattingPage extends View<ChattingPageViewProps> {
 
   private chatEditorView = new ChatEditorView({ value: "" });
 
+  private isLoading = false;
+
   protected template() {
     return html`<div>
-      <div class="chat-list">${this.chatListView}</div>
+      <div class="chat-list">
+        ${this.chatListView}
+
+        <div id="sensor" style="height: 2px"></div>
+      </div>
       <div class="chat-editor">${this.chatEditorView}</div>
     </div>`;
   }
@@ -252,6 +286,22 @@ class ChattingPage extends View<ChattingPageViewProps> {
     });
   }
 
+  private handleIntersect: IntersectionObserverCallback = async ([entry]) => {
+    if (entry.isIntersecting && !this.isLoading) {
+      const loadingElement = $.fromHtml("<div>Loading...</div>").element();
+
+      this.isLoading = true;
+      console.log("this.chatListView.element(): ", this.chatListView.element());
+      this.chatListView.element().after(loadingElement);
+      const chats = await getChats();
+      this.isLoading = false;
+      loadingElement.remove();
+
+      this.data.chats.push(...chats);
+      this.chatListView.appendAllChats(chats);
+    }
+  };
+
   protected onMount() {
     this.delegate(
       ChatRemoveButtonClickEvent,
@@ -276,6 +326,9 @@ class ChattingPage extends View<ChattingPageViewProps> {
       ChatEditorView,
       this.handleChatEditSubmit
     );
+
+    const intersectionObserver = new IntersectionObserver(this.handleIntersect);
+    intersectionObserver.observe(this.element().querySelector("#sensor")!);
   }
 }
 
@@ -291,7 +344,7 @@ const initialChats: TChat[] = [
       id: "1",
       nickname: "성우",
     },
-    text: "Hello Elit exercitation consectetur adipisicing occaecat labore sunt esse consectetur sint cupidatat duis sit irure adipisicing. Magna et laboris eu anim. Cillum cillum eiusmod sunt aute enim qui aute fugiat ex ipsum culpa tempor cillum Lorem. Aliquip est ex exercitation mollit mollit deserunt ea occaecat ipsum minim veniam labore. Aute mollit fugiat elit irure enim. Cillum ullamco ut ex ullamco fugiat laboris laborum occaecat. Sit consequat enim aliqua eiusmod qui et commodo enim incididunt veniam laborum.",
+    text: "Hello Elit exercitation consectetur adipisicing occaecat labore sunt esse consectetur sint cupidatat duis sit irure adipisicing. Magna et laboris eu anim. Cillum cillum eiusmod sunt aute enim qui aute fugiat ex ipsum culpa tempor cillum Lorem. Aliquip est ex exercitation mollit mollit deserunt ea occaecat ipsum minim veniam labore. Aute mollit fugiat elit irure enim. Cillum ullamco ut ex ullamco fugiat laboris laborum occaecat. Sit consequat enim aliqua eiusmod qui et commodo enim incididunt veniam laborum. Elit exercitation consectetur adipisicing occaecat labore sunt esse consectetur sint cupidatat duis sit irure adipisicing. Magna et laboris eu anim. Cillum cillum eiusmod sunt aute enim qui aute fugiat ex ipsum culpa tempor cillum Lorem. Aliquip est ex exercitation mollit mollit deserunt ea occaecat ipsum minim veniam labore. Aute mollit fugiat elit irure enim. Cillum ullamco ut ex ullamco fugiat laboris laborum occaecat. Sit consequat enim aliqua eiusmod qui et commodo enim incididunt veniam laborum.",
     heart: {
       count: 0,
       selected: false,
@@ -303,7 +356,7 @@ const initialChats: TChat[] = [
       id: "2",
       nickname: "보연",
     },
-    text: "Hi Occaecat minim dolor in ipsum est voluptate pariatur sit veniam adipisicing cillum commodo magna. Magna minim nostrud aliqua ipsum fugiat culpa consectetur velit minim velit ut pariatur nostrud tempor. Exercitation officia ullamco eiusmod commodo deserunt amet dolore mollit pariatur. Voluptate dolor do mollit aliqua ipsum fugiat adipisicing id ut enim labore sint veniam commodo. Id do do esse excepteur culpa aliqua enim laborum. Adipisicing anim id in elit sit nulla cillum exercitation in est pariatur culpa.",
+    text: "Hi Occaecat minim dolor in ipsum est voluptate pariatur sit veniam adipisicing cillum commodo magna. Magna minim nostrud aliqua ipsum fugiat culpa consectetur velit minim velit ut pariatur nostrud tempor. Exercitation officia ullamco eiusmod commodo deserunt amet dolore mollit pariatur. Voluptate dolor do mollit aliqua ipsum fugiat adipisicing id ut enim labore sint veniam commodo. Id do do esse excepteur culpa aliqua enim laborum. Adipisicing anim id in elit sit nulla cillum exercitation in est pariatur culpa. Occaecat minim dolor in ipsum est voluptate pariatur sit veniam adipisicing cillum commodo magna. Magna minim nostrud aliqua ipsum fugiat culpa consectetur velit minim velit ut pariatur nostrud tempor. Exercitation officia ullamco eiusmod commodo deserunt amet dolore mollit pariatur. Voluptate dolor do mollit aliqua ipsum fugiat adipisicing id ut enim labore sint veniam commodo. Id do do esse excepteur culpa aliqua enim laborum. Adipisicing anim id in elit sit nulla cillum exercitation in est pariatur culpa.",
     heart: {
       count: 0,
       selected: false,

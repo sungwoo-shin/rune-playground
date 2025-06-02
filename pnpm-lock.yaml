@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@fxts/core':
+        specifier: ^1.11.0
+        version: 1.11.0
       rune-ts:
         specifier: ^0.9.3
         version: 0.9.3
