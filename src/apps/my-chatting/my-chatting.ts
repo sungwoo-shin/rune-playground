@@ -83,6 +83,27 @@ class ChatItemView extends View<TChatItemViewProps> {
 
 class ChatListView extends ListView<ChatItemView> {
   ItemView = ChatItemView;
+
+  private me: TUser;
+
+  constructor(chats: TChat[], me: TUser) {
+    super(
+      chats.map((chat) => ({
+        chat,
+        me,
+      }))
+    );
+    this.me = me;
+  }
+
+  // @TODO sws: 다른 방법?
+  override append(_: never): never {
+    throw new Error("Use appendChat method instead of append.");
+  }
+
+  appendChat(chat: TChat) {
+    return super.append({ chat, me: this.me });
+  }
 }
 
 class ChatCreateSubmitEvent extends CustomEventWithDetail<string> {}
@@ -172,9 +193,7 @@ type TUser = {
 type ChattingPageViewProps = { me: TUser; chats: TChat[] };
 
 class ChattingPage extends View<ChattingPageViewProps> {
-  private chatListView = new ChatListView(
-    this.data.chats.map((chat) => ({ chat, me: this.data.me }))
-  );
+  private chatListView = new ChatListView(this.data.chats, this.data.me);
 
   private chatEditorView = new ChatEditorView({ value: "" });
 
@@ -214,7 +233,7 @@ class ChattingPage extends View<ChattingPageViewProps> {
       },
     };
     this.data.chats.push(newChat);
-    this.chatListView.append({ chat: newChat, me: this.data.me });
+    this.chatListView.appendChat(newChat);
     this.chatListView.itemViews.at(-1)!.element().scrollIntoView({
       behavior: "smooth",
       block: "end",
