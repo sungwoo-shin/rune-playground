@@ -1,9 +1,9 @@
 import {
+  $,
   CustomEventWithDetail,
   CustomEventWithoutDetail,
   html,
   ListView,
-  on,
   View,
 } from "rune-ts";
 import "./my-todo.scss";
@@ -15,14 +15,16 @@ type TCheckbox = {
 };
 
 class CheckboxView extends View<TCheckbox> {
+  protected template({ checked }: TCheckbox) {
+    return html`<input type="checkbox" ${checked ? "checked" : ""} />`;
+  }
+
   setChecked(checked: boolean) {
     this.data.checked = checked;
     (this.element() as HTMLInputElement).checked = checked;
   }
 
-  @on("change")
-  // @ts-expect-error
-  private handleChange(event) {
+  private handleChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const nextChecked = input.checked;
     this.setChecked(nextChecked);
@@ -32,8 +34,8 @@ class CheckboxView extends View<TCheckbox> {
     });
   }
 
-  protected template(data: TCheckbox) {
-    return html`<input type="checkbox" ${data.checked ? "checked" : ""} />`;
+  protected onMount() {
+    this.addEventListener("change", this.handleChange);
   }
 }
 
@@ -44,25 +46,27 @@ type TTodoInput = {
 };
 
 class TodoInputView extends View<TTodoInput> {
-  @on("keypress")
-  // @ts-expect-error
+  override template() {
+    return html`<input type="text" value="${this.data.value ?? ""}" />`;
+  }
+
   private handleKeypress(event: KeyboardEvent) {
     if (event.code === "Enter") {
       const input = event.target as HTMLInputElement;
       const trimmedValue = input.value.trim();
 
       if (trimmedValue) {
+        input.value = "";
         this.dispatchEvent(TodoInputSubmitEvent, {
           detail: trimmedValue,
           bubbles: true,
         });
-        input.value = "";
       }
     }
   }
 
-  override template() {
-    return html`<input type="text" value="${this.data.value ?? ""}" />`;
+  protected onMount() {
+    this.addEventListener("keypress", this.handleKeypress);
   }
 }
 
@@ -78,13 +82,19 @@ type TTodo = {
 class TodoItemView extends View<TTodo> {
   private checkboxView = new CheckboxView({ checked: this.data.completed });
 
+  protected override template({ title }: TTodo) {
+    return html`<div>
+      ${this.checkboxView}
+      <span>${title}</span>
+      <button class="remove">X</button>
+    </div>`;
+  }
+
   setCompleted(completed: boolean) {
     this.data.completed = completed;
     this.checkboxView.setChecked(completed);
   }
 
-  @on(CheckboxToggleEvent)
-  // @ts-expect-error
   private handleCheckboxToggle() {
     const nextCompleted = !this.data.completed;
     this.setCompleted(nextCompleted);
@@ -94,18 +104,18 @@ class TodoItemView extends View<TTodo> {
     });
   }
 
-  @on("click", ".remove")
-  // @ts-expect-error
   private handleRemoveButtonClick() {
     this.dispatchEvent(TodoRemoveButtonClickEvent, { bubbles: true });
   }
 
-  protected override template(data: TTodo) {
-    return html`<div>
-      ${this.checkboxView}
-      <span>${data.title}</span>
-      <button class="remove">X</button>
-    </div>`;
+  protected onMount() {
+    this.addEventListener(CheckboxToggleEvent, this.handleCheckboxToggle);
+
+    $(this.element()).delegate(
+      "click",
+      ".remove",
+      this.handleRemoveButtonClick.bind(this)
+    );
   }
 }
 
@@ -119,35 +129,41 @@ type TSegment = {
   selected?: boolean;
 };
 
-class SegmentSelectEvent<
+class LeafSegmentSelectEvent<
   T extends TSegment = TSegment
 > extends CustomEventWithDetail<T> {}
 
 class SegmentItemView<T extends TSegment> extends View<T> {
+  override template({ selected, title }: T) {
+    return html`<button class="${selected ? "selected" : ""}">
+      ${title}
+    </button>`;
+  }
+
   setSelected(selected: boolean) {
     this.data.selected = selected;
     this.element().classList.toggle("selected", selected);
   }
 
-  @on("click")
-  // @ts-expect-error TS6133
   private handleClick() {
     const nextSelected = !this.data.selected;
     if (nextSelected) {
       this.setSelected(nextSelected);
-      this.dispatchEvent(SegmentSelectEvent, {
+      this.dispatchEvent(LeafSegmentSelectEvent, {
         bubbles: true,
         detail: this.data,
       });
     }
   }
 
-  override template({ selected, title }: T) {
-    return html`<button class="${selected ? "selected" : ""}">
-      ${title}
-    </button>`;
+  protected onMount() {
+    this.addEventListener("click", this.handleClick);
   }
 }
+
+// class SegmentSelectEvent<
+//   T extends TSegment = TSegment
+// > extends CustomEventWithDetail<T> {}
 
 class SegmentedControlsListView<T extends TSegment> extends ListView<
   SegmentItemView<T>
@@ -157,9 +173,9 @@ class SegmentedControlsListView<T extends TSegment> extends ListView<
   constructor(segments: T[], public selectedIdx: number) {
     super(segments);
 
-    const seletedItemView = this.itemViews.at(selectedIdx);
-    if (seletedItemView) {
-      seletedItemView.data.selected = true;
+    const selectedItemView = this.itemViews.at(selectedIdx);
+    if (selectedItemView) {
+      selectedItemView.data.selected = true;
     }
   }
 
@@ -167,19 +183,24 @@ class SegmentedControlsListView<T extends TSegment> extends ListView<
     return this.data[this.selectedIdx];
   }
 
-  @on(SegmentSelectEvent)
-  // @ts-expect-error
-  private handleSegmentSelect(event: SegmentSelectEvent) {
+  private handleSegmentSelect(event: LeafSegmentSelectEvent) {
+    // @TODO sws: 호출 순서 2
     const selectedSegment = event.detail;
-
     const selectedIdx = this.itemViews.findIndex(
       (itemView) => itemView.data === selectedSegment
     );
     this.selectedIdx = selectedIdx;
-
     this.itemViews
       .filter((itemView) => itemView.data !== selectedSegment)
       .forEach((itemView) => itemView.setSelected(false));
+    // this.dispatchEvent(SegmentSelectEvent, {
+    //   bubbles: true,
+    //   detail: event.detail,
+    // });
+  }
+
+  protected onMount() {
+    this.addEventListener(LeafSegmentSelectEvent, this.handleSegmentSelect);
   }
 }
 
@@ -235,6 +256,20 @@ class TodoPage extends View<TTodo[]> {
     0
   );
 
+  protected override template() {
+    return html`
+      <div>
+        <div class="header">
+          ${this.toggleAllCheckboxView} ${this.todoInputView}
+        </div>
+
+        <div class="body">
+          ${this.todoListView} ${this.segmentedControlsListView}
+        </div>
+      </div>
+    `;
+  }
+
   private get isAllCompleted() {
     return this.data.length > 0 && this.data.every((todo) => todo.completed);
   }
@@ -250,8 +285,13 @@ class TodoPage extends View<TTodo[]> {
     this.todoListView.set(selectedTodos);
   }
 
-  @on(TodoInputSubmitEvent)
-  // @ts-expect-error
+  private handleCheckboxToggle(event: CheckboxToggleEvent) {
+    this.todoListView.itemViews.forEach((itemView) =>
+      itemView.setCompleted(event.detail)
+    );
+    this.setSelectedTodos();
+  }
+
   private handleTodoInputSubmit(event: TodoInputSubmitEvent) {
     const newTodo: TTodo = {
       title: event.detail,
@@ -264,44 +304,47 @@ class TodoPage extends View<TTodo[]> {
     }
   }
 
-  @on(TodoCompletedToggleEvent)
-  @on(SegmentSelectEvent)
-  // @ts-expect-error
-  private refresh() {
+  private handleRefresh() {
     this.setSelectedTodos();
+    this.syncToggleAll();
+  }
+
+  private handleTodoRemoveButtonClick(
+    _: TodoRemoveButtonClickEvent,
+    target: TodoItemView
+  ) {
+    // @TODO sws: 호출 순서 1
+    this.data.splice(this.data.indexOf(target.data), 1);
+    this.todoListView.remove(target.data);
     this.syncToggleAll();
   }
 
   protected onMount(): void {
     this.toggleAllCheckboxView.addEventListener(
       CheckboxToggleEvent,
-      (event) => {
-        this.todoListView.itemViews.forEach((itemView) =>
-          itemView.setCompleted(event.detail)
-        );
-        this.setSelectedTodos();
-      }
+      this.handleCheckboxToggle.bind(this)
     );
 
-    this.delegate(TodoRemoveButtonClickEvent, TodoItemView, (_, target) => {
-      this.data.splice(this.data.indexOf(target.data), 1);
-      this.todoListView.remove(target.data);
-      this.syncToggleAll();
-    });
-  }
+    this.todoInputView.addEventListener(
+      TodoInputSubmitEvent,
+      this.handleTodoInputSubmit.bind(this)
+    );
 
-  protected override template() {
-    return html`
-      <div>
-        <div class="header">
-          ${this.toggleAllCheckboxView} ${this.todoInputView}
-        </div>
+    this.todoListView.addEventListener(
+      TodoCompletedToggleEvent,
+      this.handleRefresh.bind(this)
+    );
 
-        <div class="body">
-          ${this.todoListView} ${this.segmentedControlsListView}
-        </div>
-      </div>
-    `;
+    this.todoListView.delegate(
+      TodoRemoveButtonClickEvent,
+      TodoItemView,
+      this.handleTodoRemoveButtonClick.bind(this)
+    );
+
+    this.segmentedControlsListView.addEventListener(
+      LeafSegmentSelectEvent,
+      this.handleRefresh.bind(this)
+    );
   }
 }
 

@@ -1,0 +1,46 @@
+html {
+  [data-rune] * {
+    box-sizing: content-box;
+  }
+
+  body {
+    margin: 0;
+  }
+}
+
+.ChatItemView {
+  border: solid gray;
+  display: flex;
+  flex-direction: column;
+}
+
+.ChatItemView.mine {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.ChattingPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat-list {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.chat-editor {
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.ChatEditorView {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+
+  textarea {
+    flex-grow: 1;
+  }
+}

@@ -111,7 +111,7 @@ class EventTestView extends View {
   // // @ts-expect-error
   // private handleClick(event: TestButtonClickEvent, target: TestButtonView) {
   //   console.log("event: ", event);
-  //   console.log("target: ", target);
+  //   // console.log("target: ", target);
   // }
 
   // delegate (8) -> Not Working
