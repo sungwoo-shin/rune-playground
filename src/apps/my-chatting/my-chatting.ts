@@ -291,7 +291,6 @@ class ChattingPage extends View<ChattingPageViewProps> {
       const loadingElement = $.fromHtml("<div>Loading...</div>").element();
 
       this.isLoading = true;
-      console.log("this.chatListView.element(): ", this.chatListView.element());
       this.chatListView.element().after(loadingElement);
       const chats = await getChats();
       this.isLoading = false;
@@ -328,7 +327,8 @@ class ChattingPage extends View<ChattingPageViewProps> {
     );
 
     const intersectionObserver = new IntersectionObserver(this.handleIntersect);
-    intersectionObserver.observe(this.element().querySelector("#sensor")!);
+    const sensorElement = this.element().querySelector("#sensor")!;
+    intersectionObserver.observe(sensorElement);
   }
 }
 
