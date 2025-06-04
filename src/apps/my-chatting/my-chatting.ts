@@ -26,20 +26,6 @@ type TChatItemViewProps = {
 };
 
 class ChatItemView extends View<TChatItemViewProps> {
-  protected template(data: TChatItemViewProps) {
-    const isMine = data.me.id === data.chat.author.id;
-
-    return html`<div class="${isMine ? "mine" : ""}">
-      <span class="nickname">닉네임: ${data.chat.author.nickname}</span>
-      <p class="balloon">텍스트: ${data.chat.text}</p>
-      <div>
-        <button class="like">좋아요: ${data.chat.heart.count}</button>
-        <button class="remove">삭제</button>
-        <button class="edit">수정</button>
-      </div>
-    </div>`;
-  }
-
   setText(text: string) {
     this.data.chat.text = text;
     $(this.element()).find(".balloon")!.setTextContent(`텍스트: ${text}`);
@@ -79,6 +65,20 @@ class ChatItemView extends View<TChatItemViewProps> {
 
     this.delegate("click", "button.edit", this.handleEditButtonClick);
   }
+
+  protected template(data: TChatItemViewProps) {
+    const isMine = data.me.id === data.chat.author.id;
+
+    return html`<div class="${isMine ? "mine" : ""}">
+      <span class="nickname">닉네임: ${data.chat.author.nickname}</span>
+      <p class="balloon">텍스트: ${data.chat.text}</p>
+      <div>
+        <button class="like">좋아요: ${data.chat.heart.count}</button>
+        <button class="remove">삭제</button>
+        <button class="edit">수정</button>
+      </div>
+    </div>`;
+  }
 }
 
 class ChatListView extends ListView<ChatItemView> {
@@ -98,14 +98,6 @@ type ChatEditorViewProps = {
 
 class ChatEditorView extends View<ChatEditorViewProps> {
   private editingChatId: string | null = null;
-
-  protected template() {
-    return html`<form>
-      <textarea required minlength="2"></textarea>
-
-      <button type="submit">제출</button>
-    </form>`;
-  }
 
   activateEditMode(chatIdToEdit: string, chatTextToEdit: string) {
     if (chatIdToEdit === this.editingChatId) {
@@ -160,6 +152,14 @@ class ChatEditorView extends View<ChatEditorViewProps> {
 
     this.addEventListener("keydown", this.handleKeydown);
   }
+
+  protected template() {
+    return html`<form>
+      <textarea required minlength="2"></textarea>
+
+      <button type="submit">제출</button>
+    </form>`;
+  }
 }
 
 const generateRandomId = () => Math.random().toString(36).substring(2, 15);
@@ -181,22 +181,15 @@ class ChattingPage extends Page<ChattingPageViewProps> {
 
   private chatEditorView = new ChatEditorView({ value: "" });
 
-  protected template() {
-    return html`<div>
-      <div class="chat-list">${this.chatListView}</div>
-      <div class="chat-editor">${this.chatEditorView}</div>
-    </div>`;
+  private handleChatRemoveButtonClick(targetView: ChatItemView) {
+    this.data.chats.splice(this.data.chats.indexOf(targetView.data.chat), 1);
+    this.chatListView.remove(targetView.data);
   }
 
-  private handleChatRemoveButtonClick(chatItemView: ChatItemView) {
-    this.data.chats.splice(this.data.chats.indexOf(chatItemView.data.chat), 1);
-    this.chatListView.remove(chatItemView.data);
-  }
-
-  private handleChatEditButtonClick(chatItemView: ChatItemView) {
+  private handleChatEditButtonClick(targetView: ChatItemView) {
     this.chatEditorView.activateEditMode(
-      chatItemView.data.chat.id,
-      chatItemView.data.chat.text
+      targetView.data.chat.id,
+      targetView.data.chat.text
     );
   }
 
@@ -252,6 +245,13 @@ class ChattingPage extends Page<ChattingPageViewProps> {
       ChatEditorView,
       this.handleChatEditSubmit
     );
+  }
+
+  protected template() {
+    return html`<div>
+      <div class="chat-list">${this.chatListView}</div>
+      <div class="chat-editor">${this.chatEditorView}</div>
+    </div>`;
   }
 }
 
