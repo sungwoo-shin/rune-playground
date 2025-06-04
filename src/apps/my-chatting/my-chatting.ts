@@ -18,43 +18,43 @@ type TChat = {
   };
 };
 
-type TChatItemViewProps = {
-  chat: TChat;
-  me: {
-    id: string;
-  };
-};
+class ChatItemView extends View<TChat> {
+  private me!: TUser;
 
-class ChatItemView extends View<TChatItemViewProps> {
+  setMe(me: TUser) {
+    this.me = me;
+    return this;
+  }
+
   setText(text: string) {
-    this.data.chat.text = text;
+    this.data.text = text;
     $(this.element()).find(".balloon")!.setTextContent(`텍스트: ${text}`);
   }
 
   private handleLikeButtonClick() {
-    if (this.data.chat.heart.selected) {
-      this.data.chat.heart.selected = false;
-      this.data.chat.heart.count -= 1;
+    if (this.data.heart.selected) {
+      this.data.heart.selected = false;
+      this.data.heart.count -= 1;
     } else {
-      this.data.chat.heart.selected = true;
-      this.data.chat.heart.count += 1;
+      this.data.heart.selected = true;
+      this.data.heart.count += 1;
     }
     $(this.element())
       .find("button.like")!
-      .setTextContent(`좋아요: ${this.data.chat.heart.count}`);
+      .setTextContent(`좋아요: ${this.data.heart.count}`);
   }
 
   private handleRemoveButtonClick() {
     this.dispatchEvent(ChatRemoveButtonClickEvent, {
       bubbles: true,
-      detail: this.data.chat.id,
+      detail: this.data.id,
     });
   }
 
   private handleEditButtonClick() {
     this.dispatchEvent(ChatEditButtonClickEvent, {
       bubbles: true,
-      detail: this.data.chat.id,
+      detail: this.data.id,
     });
   }
 
@@ -66,14 +66,14 @@ class ChatItemView extends View<TChatItemViewProps> {
     this.delegate("click", "button.edit", this.handleEditButtonClick);
   }
 
-  protected template(data: TChatItemViewProps) {
-    const isMine = data.me.id === data.chat.author.id;
+  protected template(data: TChat) {
+    const isMine = data.author.id === this.me.id;
 
     return html`<div class="${isMine ? "mine" : ""}">
-      <span class="nickname">닉네임: ${data.chat.author.nickname}</span>
-      <p class="balloon">텍스트: ${data.chat.text}</p>
+      <span class="nickname">닉네임: ${data.author.nickname}</span>
+      <p class="balloon">텍스트: ${data.text}</p>
       <div>
-        <button class="like">좋아요: ${data.chat.heart.count}</button>
+        <button class="like">좋아요: ${data.heart.count}</button>
         <button class="remove">삭제</button>
         <button class="edit">수정</button>
       </div>
@@ -83,13 +83,21 @@ class ChatItemView extends View<TChatItemViewProps> {
 
 class ChatListView extends ListView<ChatItemView> {
   ItemView = ChatItemView;
+
+  constructor(chats: TChat[], private me: TUser) {
+    super(chats);
+  }
+
+  createItemView(item: TChat): ChatItemView {
+    return new ChatItemView(item).setMe(this.me);
+  }
 }
 
 class ChatCreateSubmitEvent extends CustomEventWithDetail<string> {}
 
 class ChatEditSubmitEvent extends CustomEventWithDetail<{
-  chatIdToEdit: string;
-  chatTextToEdit: string;
+  editedChatId: string;
+  editedChatText: string;
 }> {}
 
 type ChatEditorViewProps = {
@@ -123,8 +131,8 @@ class ChatEditorView extends View<ChatEditorViewProps> {
       if (this.editingChatId) {
         this.dispatchEvent(ChatEditSubmitEvent, {
           detail: {
-            chatIdToEdit: this.editingChatId,
-            chatTextToEdit: trimmedValue,
+            editedChatId: this.editingChatId,
+            editedChatText: trimmedValue,
           },
           bubbles: true,
         });
@@ -172,24 +180,18 @@ type TUser = {
 type ChattingPageViewProps = { me: TUser; chats: TChat[] };
 
 class ChattingPage extends Page<ChattingPageViewProps> {
-  private chatListView = new ChatListView(
-    this.data.chats.map((chat) => ({
-      chat,
-      me: this.data.me,
-    }))
-  );
+  private chatListView = new ChatListView(this.data.chats, this.data.me);
 
   private chatEditorView = new ChatEditorView({ value: "" });
 
   private handleChatRemoveButtonClick(targetView: ChatItemView) {
-    this.data.chats.splice(this.data.chats.indexOf(targetView.data.chat), 1);
     this.chatListView.remove(targetView.data);
   }
 
   private handleChatEditButtonClick(targetView: ChatItemView) {
     this.chatEditorView.activateEditMode(
-      targetView.data.chat.id,
-      targetView.data.chat.text
+      targetView.data.id,
+      targetView.data.text
     );
   }
 
@@ -203,9 +205,7 @@ class ChattingPage extends Page<ChattingPageViewProps> {
         selected: false,
       },
     };
-
-    this.data.chats.push(newChat);
-    this.chatListView.append({ chat: newChat, me: this.data.me });
+    this.chatListView.append(newChat);
     this.chatListView.itemViews.at(-1)!.element().scrollIntoView({
       behavior: "smooth",
       block: "end",
@@ -213,10 +213,9 @@ class ChattingPage extends Page<ChattingPageViewProps> {
   }
 
   private handleChatEditSubmit(event: ChatEditSubmitEvent) {
-    const { chatIdToEdit: editedChatId, chatTextToEdit: editedChatText } =
-      event.detail;
+    const { editedChatId, editedChatText } = event.detail;
     const editedItemView = this.chatListView.itemViews.find(
-      (itemView) => itemView.data.chat.id === editedChatId
+      (itemView) => itemView.data.id === editedChatId
     );
     editedItemView?.setText(editedChatText);
     editedItemView?.element().scrollIntoView({
@@ -257,7 +256,7 @@ class ChattingPage extends Page<ChattingPageViewProps> {
 
 const me: TUser = {
   id: "1",
-  nickname: "성우",
+  nickname: "AAA",
 };
 
 const initialChats: TChat[] = [
@@ -265,7 +264,7 @@ const initialChats: TChat[] = [
     id: "1",
     author: {
       id: "1",
-      nickname: "성우",
+      nickname: "AAA",
     },
     text: "Hello Elit exercitation consectetur adipisicing occaecat labore sunt esse consectetur sint cupidatat duis sit irure adipisicing. Magna et laboris eu anim. Cillum cillum eiusmod sunt aute enim qui aute fugiat ex ipsum culpa tempor cillum Lorem. Aliquip est ex exercitation mollit mollit deserunt ea occaecat ipsum minim veniam labore. Aute mollit fugiat elit irure enim. Cillum ullamco ut ex ullamco fugiat laboris laborum occaecat. Sit consequat enim aliqua eiusmod qui et commodo enim incididunt veniam laborum. Elit exercitation consectetur adipisicing occaecat labore sunt esse consectetur sint cupidatat duis sit irure adipisicing. Magna et laboris eu anim. Cillum cillum eiusmod sunt aute enim qui aute fugiat ex ipsum culpa tempor cillum Lorem. Aliquip est ex exercitation mollit mollit deserunt ea occaecat ipsum minim veniam labore. Aute mollit fugiat elit irure enim. Cillum ullamco ut ex ullamco fugiat laboris laborum occaecat. Sit consequat enim aliqua eiusmod qui et commodo enim incididunt veniam laborum.",
     heart: {
@@ -277,7 +276,7 @@ const initialChats: TChat[] = [
     id: "2",
     author: {
       id: "2",
-      nickname: "보연",
+      nickname: "BBB",
     },
     text: "Hi Occaecat minim dolor in ipsum est voluptate pariatur sit veniam adipisicing cillum commodo magna. Magna minim nostrud aliqua ipsum fugiat culpa consectetur velit minim velit ut pariatur nostrud tempor. Exercitation officia ullamco eiusmod commodo deserunt amet dolore mollit pariatur. Voluptate dolor do mollit aliqua ipsum fugiat adipisicing id ut enim labore sint veniam commodo. Id do do esse excepteur culpa aliqua enim laborum. Adipisicing anim id in elit sit nulla cillum exercitation in est pariatur culpa. Occaecat minim dolor in ipsum est voluptate pariatur sit veniam adipisicing cillum commodo magna. Magna minim nostrud aliqua ipsum fugiat culpa consectetur velit minim velit ut pariatur nostrud tempor. Exercitation officia ullamco eiusmod commodo deserunt amet dolore mollit pariatur. Voluptate dolor do mollit aliqua ipsum fugiat adipisicing id ut enim labore sint veniam commodo. Id do do esse excepteur culpa aliqua enim laborum. Adipisicing anim id in elit sit nulla cillum exercitation in est pariatur culpa.",
     heart: {
