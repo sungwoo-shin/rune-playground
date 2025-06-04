@@ -72,7 +72,7 @@ class ChatItemView extends View<TChatItemViewProps> {
     });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.delegate("click", "button.like", this.handleLikeButtonClick);
 
     this.delegate("click", "button.remove", this.handleRemoveButtonClick);
@@ -155,7 +155,7 @@ class ChatEditorView extends View<ChatEditorViewProps> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("submit", this.handleSubmit);
 
     this.addEventListener("keydown", this.handleKeydown);
@@ -233,7 +233,7 @@ class ChattingPage extends View<ChattingPageViewProps> {
     });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.delegate(
       ChatRemoveButtonClickEvent,
       ChatListView,

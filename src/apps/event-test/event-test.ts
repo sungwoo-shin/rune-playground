@@ -19,14 +19,14 @@ class EventTestView extends View {
   private testButtonView = new TestButtonView({});
 
   // // addEventListener (1) -> OK
-  // protected onMount() {
+  // protected onRender() {
   //   this.addEventListener("test:button:click:event", (event) => {
   //     console.log("event: ", event);
   //   });
   // }
 
   // // addEventListener (2) -> OK
-  // protected onMount() {
+  // protected onRender() {
   //   this.addEventListener(TestButtonClickEvent, (event) => {
   //     console.log("event: ", event);
   //   });
@@ -47,7 +47,7 @@ class EventTestView extends View {
   // }
 
   // // delegate (1) -> OK
-  // protected onMount() {
+  // protected onRender() {
   //   this.delegate(
   //     "test:button:click:event",
   //     ".test-button-wrapper",
@@ -59,7 +59,7 @@ class EventTestView extends View {
   // }
 
   // // delegate (2) -> No overload matches this call.
-  // protected onMount() {
+  // protected onRender() {
   //   this.delegate(
   //     "test:button:click:event",
   //     TestButtonView,
@@ -71,7 +71,7 @@ class EventTestView extends View {
   // }
 
   // // delegate (3) -> No overload matches this call.
-  // protected onMount() {
+  // protected onRender() {
   //   this.delegate(
   //     TestButtonClickEvent,
   //     ".test-button-wrapper",
@@ -83,7 +83,7 @@ class EventTestView extends View {
   // }
 
   // // delegate (4) -> OK
-  // protected onMount() {
+  // protected onRender() {
   //   this.delegate(TestButtonClickEvent, TestButtonView, (event, target) => {
   //     console.log("event: ", event);
   //     console.log("target: ", target);

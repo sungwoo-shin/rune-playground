@@ -33,7 +33,7 @@ class CheckboxView extends View<TCheckbox> {
     });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("change", this.handleChange);
   }
 }
@@ -66,7 +66,7 @@ class TodoInputView extends View<TTodoInput> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("keypress", this.handleKeypress);
   }
 }
@@ -109,7 +109,7 @@ class TodoItemView extends View<TTodo> {
     this.dispatchEvent(TodoRemoveButtonClickEvent, { bubbles: true });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener(CheckboxToggleEvent, this.handleCheckboxToggle);
 
     this.delegate("click", ".remove", this.handleRemoveButtonClick);
@@ -149,7 +149,7 @@ class SegmentItemView<T extends TSegment> extends View<T> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("click", this.handleClick);
   }
 }
@@ -187,7 +187,7 @@ class SegmentedControlsListView<T extends TSegment> extends ListView<
       .forEach((itemView) => itemView.setSelected(false));
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener(SegmentSelectEvent, this.handleSegmentSelect);
   }
 }
@@ -299,11 +299,14 @@ class TodoPage extends View<TTodo[]> {
 
   private handleTodoRemoveButtonClick(todoItemView: TodoItemView) {
     this.data.splice(this.data.indexOf(todoItemView.data), 1);
+    // TODO sws: Uncaught TypeError: 'data' property is readonly.
+    // https://github.com/marpple/rune/blob/cb0000b7cf34459092a298211611b9b6e75fc39f/rune/src/VirtualView.ts#L25-L27
+    // this.data = this.data.filter((todo) => todo !== todoItemView.data);
     this.todoListView.remove(todoItemView.data);
     this.syncToggleAll();
   }
 
-  protected onMount(): void {
+  protected onRender(): void {
     this.delegate(
       CheckboxToggleEvent,
       ToggleAllCheckboxView,

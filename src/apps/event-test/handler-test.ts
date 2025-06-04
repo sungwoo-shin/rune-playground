@@ -67,8 +67,8 @@ class ButtonWrapperView extends View {
     return html`<div>${this.buttonView}</div>`;
   }
 
-  protected onMount() {
-    console.log("ButtonWrapperView onMount"); // 2
+  protected onRender() {
+    console.log("ButtonWrapperView onRender"); // 2
 
     this.addEventListener(ButtonClickEvent, () => {
       console.log("ButtonWrapperView"); // 4
@@ -83,8 +83,8 @@ class PageView extends View {
     return html`<div>${this.buttonWrapperView}</div>`;
   }
 
-  protected onMount() {
-    console.log("PageView onMount"); // 1
+  protected onRender() {
+    console.log("PageView onRender"); // 1
 
     this.buttonWrapperView.addEventListener(ButtonClickEvent, () => {
       console.log("PageView"); // 3

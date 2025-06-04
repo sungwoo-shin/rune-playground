@@ -34,7 +34,7 @@ class CheckboxView extends View<TCheckbox> {
     });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("change", this.handleChange);
   }
 }
@@ -65,7 +65,7 @@ class TodoInputView extends View<TTodoInput> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("keypress", this.handleKeypress);
   }
 }
@@ -108,7 +108,7 @@ class TodoItemView extends View<TTodo> {
     this.dispatchEvent(TodoRemoveButtonClickEvent, { bubbles: true });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener(CheckboxToggleEvent, this.handleCheckboxToggle);
 
     $(this.element()).delegate(
@@ -156,7 +156,7 @@ class SegmentItemView<T extends TSegment> extends View<T> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("click", this.handleClick);
   }
 }
@@ -184,7 +184,6 @@ class SegmentedControlsListView<T extends TSegment> extends ListView<
   }
 
   private handleSegmentSelect(event: LeafSegmentSelectEvent) {
-    // @TODO sws: 호출 순서 2
     const selectedSegment = event.detail;
     const selectedIdx = this.itemViews.findIndex(
       (itemView) => itemView.data === selectedSegment
@@ -199,7 +198,7 @@ class SegmentedControlsListView<T extends TSegment> extends ListView<
     // });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener(LeafSegmentSelectEvent, this.handleSegmentSelect);
   }
 }
@@ -313,13 +312,12 @@ class TodoPage extends View<TTodo[]> {
     _: TodoRemoveButtonClickEvent,
     target: TodoItemView
   ) {
-    // @TODO sws: 호출 순서 1
     this.data.splice(this.data.indexOf(target.data), 1);
     this.todoListView.remove(target.data);
     this.syncToggleAll();
   }
 
-  protected onMount(): void {
+  protected onRender(): void {
     this.toggleAllCheckboxView.addEventListener(
       CheckboxToggleEvent,
       this.handleCheckboxToggle.bind(this)

@@ -74,7 +74,7 @@ class ChatItemView extends View<TChatItemViewProps> {
     });
   }
 
-  protected onMount() {
+  protected onRender() {
     this.delegate("click", "button.like", this.handleLikeButtonClick);
 
     this.delegate("click", "button.remove", this.handleRemoveButtonClick);
@@ -107,7 +107,7 @@ class ChatListView extends ListView<ChatItemView> {
   }
 
   override appendAll(_: never): never {
-    throw new Error("Use appendChat method instead of appendAll.");
+    throw new Error("Use appendAllChats method instead of appendAll.");
   }
   appendAllChats(chats: TChat[]) {
     return super.appendAll(
@@ -189,7 +189,7 @@ class ChatEditorView extends View<ChatEditorViewProps> {
     }
   }
 
-  protected onMount() {
+  protected onRender() {
     this.addEventListener("submit", this.handleSubmit);
 
     this.addEventListener("keydown", this.handleKeydown);
@@ -301,7 +301,7 @@ class ChattingPage extends View<ChattingPageViewProps> {
     }
   };
 
-  protected onMount() {
+  protected onRender() {
     this.delegate(
       ChatRemoveButtonClickEvent,
       ChatListView,
