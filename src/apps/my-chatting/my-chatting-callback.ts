@@ -23,7 +23,7 @@ type TChatItemViewProps = {
   me: {
     id: string;
   };
-  // TODO sws: callback
+  // callback
   onRemoveButtonClick: (id: string) => void;
   onEditButtonClick: (id: string) => void;
 };
@@ -62,6 +62,8 @@ class ChatItemView extends View<TChatItemViewProps> {
   }
 
   private handleRemoveButtonClick() {
+    // 이벤트가 밖으로 계속해서 전달되거나 막을 수 있도록
+    // 브라우저 체계
     // this.dispatchEvent(ChatRemoveButtonClickEvent, {
     //   bubbles: true,
     //   detail: this.data.chat.id,

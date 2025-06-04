@@ -1,7 +1,5 @@
-import { $, CustomEventWithDetail, html, ListView, View } from "rune-ts";
+import { $, CustomEventWithDetail, html, ListView, Page, View } from "rune-ts";
 import "./my-chatting.scss";
-import { delay } from "@fxts/core";
-import { mockChats } from "./mockChats";
 
 class ChatRemoveButtonClickEvent extends CustomEventWithDetail<string> {}
 
@@ -85,45 +83,13 @@ class ChatItemView extends View<TChatItemViewProps> {
 
 class ChatListView extends ListView<ChatItemView> {
   ItemView = ChatItemView;
-
-  private me: TUser;
-
-  constructor(chats: TChat[], me: TUser) {
-    super(
-      chats.map((chat) => ({
-        chat,
-        me,
-      }))
-    );
-    this.me = me;
-  }
-
-  // @TODO sws: 다른 방법?
-  override append(_: never): never {
-    throw new Error("Use appendChat method instead of append.");
-  }
-  appendChat(chat: TChat) {
-    return super.append({ chat, me: this.me });
-  }
-
-  override appendAll(_: never): never {
-    throw new Error("Use appendAllChats method instead of appendAll.");
-  }
-  appendAllChats(chats: TChat[]) {
-    return super.appendAll(
-      chats.map((chat) => ({
-        chat,
-        me: this.me,
-      }))
-    );
-  }
 }
 
 class ChatCreateSubmitEvent extends CustomEventWithDetail<string> {}
 
 class ChatEditSubmitEvent extends CustomEventWithDetail<{
-  editedChatId: string;
-  editedChatText: string;
+  chatIdToEdit: string;
+  chatTextToEdit: string;
 }> {}
 
 type ChatEditorViewProps = {
@@ -165,8 +131,8 @@ class ChatEditorView extends View<ChatEditorViewProps> {
       if (this.editingChatId) {
         this.dispatchEvent(ChatEditSubmitEvent, {
           detail: {
-            editedChatId: this.editingChatId,
-            editedChatText: trimmedValue,
+            chatIdToEdit: this.editingChatId,
+            chatTextToEdit: trimmedValue,
           },
           bubbles: true,
         });
@@ -196,21 +162,6 @@ class ChatEditorView extends View<ChatEditorViewProps> {
   }
 }
 
-const CHAT_COUNT_PER_PAGE = 5;
-
-const getChats = (() => {
-  let page = 0;
-
-  return async () => {
-    await delay(3000);
-    const start = page * CHAT_COUNT_PER_PAGE;
-    const end = start + CHAT_COUNT_PER_PAGE;
-    const result = mockChats.slice(start, end);
-    page += 1;
-    return result;
-  };
-})();
-
 const generateRandomId = () => Math.random().toString(36).substring(2, 15);
 
 type TUser = {
@@ -220,40 +171,33 @@ type TUser = {
 
 type ChattingPageViewProps = { me: TUser; chats: TChat[] };
 
-class ChattingPage extends View<ChattingPageViewProps> {
-  private chatListView = new ChatListView(this.data.chats, this.data.me);
+class ChattingPage extends Page<ChattingPageViewProps> {
+  private chatListView = new ChatListView(
+    this.data.chats.map((chat) => ({
+      chat,
+      me: this.data.me,
+    }))
+  );
 
   private chatEditorView = new ChatEditorView({ value: "" });
 
-  private isLoading = false;
-
   protected template() {
     return html`<div>
-      <div class="chat-list">
-        ${this.chatListView}
-
-        <div id="sensor" style="height: 2px"></div>
-      </div>
+      <div class="chat-list">${this.chatListView}</div>
       <div class="chat-editor">${this.chatEditorView}</div>
     </div>`;
   }
 
-  private handleChatRemoveButtonClick(event: ChatRemoveButtonClickEvent) {
-    const chatIdToRemove = event.detail;
-    this.data.chats = this.data.chats.filter(
-      (chat) => chat.id !== chatIdToRemove
-    );
-    this.chatListView.removeBy(
-      (itemView) => itemView.data.chat.id === chatIdToRemove
-    );
+  private handleChatRemoveButtonClick(chatItemView: ChatItemView) {
+    this.data.chats.splice(this.data.chats.indexOf(chatItemView.data.chat), 1);
+    this.chatListView.remove(chatItemView.data);
   }
 
-  private handleChatEditButtonClick(event: ChatEditButtonClickEvent) {
-    const chatIdToEdit = event.detail;
-    const chatToEdit = this.data.chats.find(
-      (chat) => chat.id === chatIdToEdit
-    )!;
-    this.chatEditorView.activateEditMode(chatIdToEdit, chatToEdit.text);
+  private handleChatEditButtonClick(chatItemView: ChatItemView) {
+    this.chatEditorView.activateEditMode(
+      chatItemView.data.chat.id,
+      chatItemView.data.chat.text
+    );
   }
 
   private handleChatCreateSubmit(event: ChatCreateSubmitEvent) {
@@ -266,8 +210,9 @@ class ChattingPage extends View<ChattingPageViewProps> {
         selected: false,
       },
     };
+
     this.data.chats.push(newChat);
-    this.chatListView.appendChat(newChat);
+    this.chatListView.append({ chat: newChat, me: this.data.me });
     this.chatListView.itemViews.at(-1)!.element().scrollIntoView({
       behavior: "smooth",
       block: "end",
@@ -275,7 +220,8 @@ class ChattingPage extends View<ChattingPageViewProps> {
   }
 
   private handleChatEditSubmit(event: ChatEditSubmitEvent) {
-    const { editedChatId, editedChatText } = event.detail;
+    const { chatIdToEdit: editedChatId, chatTextToEdit: editedChatText } =
+      event.detail;
     const editedItemView = this.chatListView.itemViews.find(
       (itemView) => itemView.data.chat.id === editedChatId
     );
@@ -286,32 +232,13 @@ class ChattingPage extends View<ChattingPageViewProps> {
     });
   }
 
-  private handleIntersect: IntersectionObserverCallback = async ([entry]) => {
-    if (entry.isIntersecting && !this.isLoading) {
-      const loadingElement = $.fromHtml("<div>Loading...</div>").element();
-
-      this.isLoading = true;
-      this.chatListView.element().after(loadingElement);
-      const chats = await getChats();
-      this.isLoading = false;
-      loadingElement.remove();
-
-      this.data.chats.push(...chats);
-      this.chatListView.appendAllChats(chats);
-    }
-  };
-
   protected onRender() {
-    this.delegate(
-      ChatRemoveButtonClickEvent,
-      ChatListView,
-      this.handleChatRemoveButtonClick
+    this.delegate(ChatRemoveButtonClickEvent, ChatItemView, (_, targetView) =>
+      this.handleChatRemoveButtonClick(targetView)
     );
 
-    this.delegate(
-      ChatEditButtonClickEvent,
-      ChatListView,
-      this.handleChatEditButtonClick
+    this.delegate(ChatEditButtonClickEvent, ChatItemView, (_, targetView) =>
+      this.handleChatEditButtonClick(targetView)
     );
 
     this.delegate(
@@ -325,10 +252,6 @@ class ChattingPage extends View<ChattingPageViewProps> {
       ChatEditorView,
       this.handleChatEditSubmit
     );
-
-    const intersectionObserver = new IntersectionObserver(this.handleIntersect);
-    const sensorElement = this.element().querySelector("#sensor")!;
-    intersectionObserver.observe(sensorElement);
   }
 }
 

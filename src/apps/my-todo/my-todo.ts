@@ -67,7 +67,15 @@ class TodoInputView extends View<TTodoInput> {
   }
 
   protected onRender() {
-    this.addEventListener("keypress", this.handleKeypress);
+    this.addEventListener("keypress", (event) => {
+      // event.target
+    });
+
+    this.delegate("keypress", "div", (event) => {
+      // event.target
+      // //
+      // event.currentTarget
+    });
   }
 }
 
@@ -232,6 +240,9 @@ class TodoPage extends View<TTodo[]> {
 
   private todoInputView = new TodoInputView({ value: "" });
 
+  // TodoListView 내에서 리스트를 덮어쓰는 일은 일어나지 않을거야
+  // 바깥 컴포넌트에서 만든 배열이 있고 그대로 전달/ 불변이 아니라 상위 dataㄹ를 쉐어할 수 있기를 바람
+  // TODO 페이지는 전체 페이지를 관리, 리스트는 필터된 일부를 관리 전체 스토어와 뷰를 그리기 위한 스토어 분리
   private todoListView = new TodoListView([...this.data]);
 
   private segmentedControlsListView = new SegmentedControlsListView(
@@ -299,7 +310,7 @@ class TodoPage extends View<TTodo[]> {
 
   private handleTodoRemoveButtonClick(todoItemView: TodoItemView) {
     this.data.splice(this.data.indexOf(todoItemView.data), 1);
-    // TODO sws: Uncaught TypeError: 'data' property is readonly.
+    // Uncaught TypeError: 'data' property is readonly.
     // https://github.com/marpple/rune/blob/cb0000b7cf34459092a298211611b9b6e75fc39f/rune/src/VirtualView.ts#L25-L27
     // this.data = this.data.filter((todo) => todo !== todoItemView.data);
     this.todoListView.remove(todoItemView.data);
