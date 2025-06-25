@@ -59,7 +59,16 @@ class ChatItemView extends View<TChat> {
   }
 
   protected onRender() {
-    this.delegate("click", "button.like", this.handleLikeButtonClick);
+    // this.delegate("click", "button.like", this.handleLikeButtonClick);
+
+    // this.addEventListener("click", (event) => {
+    //   console.log("event.target: ", event.target);
+    // });
+
+    this.delegate("click", "button.like", (event) => {
+      console.log("event.target: ", event.target);
+      console.log("event.target: ", event.currentTarget);
+    });
 
     this.delegate("click", "button.remove", this.handleRemoveButtonClick);
 

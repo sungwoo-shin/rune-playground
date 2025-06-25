@@ -1,0 +1,42 @@
+@mixin show-bold-text() {
+  & > .normal {
+    opacity: 0;
+  }
+
+  & > .bold {
+    opacity: 1;
+  }
+}
+
+@mixin show-normal-text() {
+  & > .normal {
+    opacity: 1;
+  }
+
+  & > .bold {
+    opacity: 0;
+  }
+}
+
+.container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  //position: relative;
+  .normal {
+    position: absolute;
+    opacity: 1;
+  }
+
+  .bold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+  }
+
+  &.active {
+    @include show-bold-text;
+  }
+}

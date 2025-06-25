@@ -19,14 +19,14 @@ type TButtonViewProps = {
 
 class ButtonView extends View<TButtonViewProps> {
   template(data: TButtonViewProps) {
-    return html`<button class="btn">${data.label}</button>`;
+    return html`<button class="${data.style}">${data.label}</button>`;
   }
 }
 
-// document.getElementById("app")!.appendChild(
-//   new ButtonView({
-//     size: 80,
-//     style: "Primary_A",
-//     label: "Click Me",
-//   }).render()
-// );
+document.getElementById("app")!.appendChild(
+  new ButtonView({
+    size: 80,
+    style: "Primary_A",
+    label: "Click Me",
+  }).render()
+);
