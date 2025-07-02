@@ -1,6 +1,6 @@
 import { CustomEventWithoutDetail, html, ListView, Page, View } from "rune-ts";
 
-class ChatRemoveButtonClickEvent extends CustomEventWithoutDetail {}
+class RemoveButtonClickEvent extends CustomEventWithoutDetail {}
 
 type TChat = {
   text: string;
@@ -9,7 +9,7 @@ type TChat = {
 class ChatItemView extends View<TChat> {
   protected onRender() {
     this.delegate("click", "button", () => {
-      this.dispatchEvent(ChatRemoveButtonClickEvent, { bubbles: true });
+      this.dispatchEvent(RemoveButtonClickEvent, { bubbles: true });
     });
   }
 
@@ -29,7 +29,7 @@ class ChatPage extends Page<{ chats: TChat[] }> {
   private chatListView = new ChatListView(this.data.chats);
 
   protected onRender() {
-    this.delegate(ChatRemoveButtonClickEvent, ChatItemView, (_, targetView) => {
+    this.delegate(RemoveButtonClickEvent, ChatItemView, (_, targetView) => {
       console.log("this.data.chats: ", this.data.chats);
       this.chatListView.remove(targetView.data);
       console.log("this.data.chats: ", this.data.chats);
