@@ -15,6 +15,6 @@
   },
   "dependencies": {
     "@fxts/core": "^1.11.0",
-    "rune-ts": "^0.9.3"
+    "rune-ts": "^0.9.4"
   }
 }
